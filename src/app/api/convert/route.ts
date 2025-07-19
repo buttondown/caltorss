@@ -42,7 +42,7 @@ function formatDuration(start: Date, end: Date): string {
   const diffMs = end.getTime() - start.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   if (diffHours > 0 && diffMinutes > 0) {
     return `${diffHours}h ${diffMinutes}m`;
   } else if (diffHours > 0) {
@@ -81,12 +81,9 @@ export async function GET(request: NextRequest) {
     icsUrl = searchParams.get("url") || "";
   }
 
-  // If no URL is provided, return an error
+  // If no URL <is> provided, return an error
   if (!icsUrl) {
-    return NextResponse.json(
-      { error: "No ICS URL provided" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "No ICS URL provided" }, { status: 400 });
   }
 
   try {
@@ -122,23 +119,39 @@ export async function GET(request: NextRequest) {
           location: component.location,
           url: component.url,
           uid: component.uid,
-          organizer: typeof component.organizer === 'string' ? component.organizer : undefined,
-          attendees: component.attendee ? 
-            (Array.isArray(component.attendee) ? 
-              component.attendee.map((a: unknown) => {
-                if (typeof a === 'string') return a;
-                const attendee = a as { val?: string; params?: { CN?: string } };
-                return attendee.val || attendee.params?.CN || '';
-              }) : 
-              [typeof component.attendee === 'string' ? component.attendee : '']) : 
-            undefined,
+          organizer:
+            typeof component.organizer === "string"
+              ? component.organizer
+              : undefined,
+          attendees: component.attendee
+            ? Array.isArray(component.attendee)
+              ? component.attendee.map((a: unknown) => {
+                  if (typeof a === "string") return a;
+                  const attendee = a as {
+                    val?: string;
+                    params?: { CN?: string };
+                  };
+                  return attendee.val || attendee.params?.CN || "";
+                })
+              : [
+                  typeof component.attendee === "string"
+                    ? component.attendee
+                    : "",
+                ]
+            : undefined,
           created: component.created,
           lastModified: component.lastmodified,
         };
 
         // Only include future events or events from the last 30 days
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        if (event.start && event.start >= thirtyDaysAgo && event.start <= oneYearFromNow) {
+        const thirtyDaysAgo = new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000
+        );
+        if (
+          event.start &&
+          event.start >= thirtyDaysAgo &&
+          event.start <= oneYearFromNow
+        ) {
           events.push(event);
         }
       }
@@ -160,20 +173,24 @@ export async function GET(request: NextRequest) {
         let itemXml = "    <item>\n";
 
         // Title - include date and time
-        const eventDate = event.start ? 
-          event.start.toLocaleDateString("en-US", { 
-            weekday: "short", 
-            year: "numeric", 
-            month: "short", 
-            day: "numeric" 
-          }) : "";
-        const eventTime = event.start ? 
-          event.start.toLocaleTimeString("en-US", { 
-            hour: "numeric", 
-            minute: "2-digit" 
-          }) : "";
-        
-        const title = `${eventDate}${eventTime ? ` at ${eventTime}` : ""}: ${event.summary || "Untitled Event"}`;
+        const eventDate = event.start
+          ? event.start.toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
+          : "";
+        const eventTime = event.start
+          ? event.start.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            })
+          : "";
+
+        const title = `${eventDate}${eventTime ? ` at ${eventTime}` : ""}: ${
+          event.summary || "Untitled Event"
+        }`;
         itemXml += `      <title>${escapeXml(title)}</title>\n`;
 
         // Link
@@ -182,7 +199,7 @@ export async function GET(request: NextRequest) {
         }
 
         // GUID
-        itemXml += `      <guid>${escapeXml(
+        itemXml += `      <guid isPermaLink="false">${escapeXml(
           event.uid || `${icsUrl}#${event.start?.toISOString()}`
         )}</guid>\n`;
 
@@ -193,11 +210,11 @@ export async function GET(request: NextRequest) {
 
         // Description - combine all event details
         let description = "";
-        
+
         if (event.description) {
           description += `${event.description}\n\n`;
         }
-        
+
         if (event.start && event.end) {
           const duration = formatDuration(event.start, event.end);
           description += `📅 ${event.start.toLocaleString()}`;
@@ -206,21 +223,23 @@ export async function GET(request: NextRequest) {
           }
           description += "\n";
         }
-        
+
         if (event.location) {
           description += `📍 ${event.location}\n`;
         }
-        
+
         if (event.organizer) {
           description += `👤 Organizer: ${event.organizer}\n`;
         }
-        
+
         if (event.attendees && event.attendees.length > 0) {
           description += `👥 Attendees: ${event.attendees.join(", ")}\n`;
         }
 
         if (description) {
-          itemXml += `      <description>${wrapCDATA(description.trim())}</description>\n`;
+          itemXml += `      <description>${wrapCDATA(
+            description.trim()
+          )}</description>\n`;
         }
 
         // Categories
@@ -235,7 +254,10 @@ export async function GET(request: NextRequest) {
     let calendarName = "Calendar Feed";
     // The parsed data might contain calendar properties at the root level
     const calData = parsedData as Record<string, unknown>;
-    if (calData["x-wr-calname"] && typeof calData["x-wr-calname"] === 'string') {
+    if (
+      calData["x-wr-calname"] &&
+      typeof calData["x-wr-calname"] === "string"
+    ) {
       calendarName = calData["x-wr-calname"];
     }
 
