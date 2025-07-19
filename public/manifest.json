@@ -1,0 +1,16 @@
+{
+  "name": "caltorss",
+  "short_name": "caltorss",
+  "description": "Convert ICS calendar files into RSS feeds",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
