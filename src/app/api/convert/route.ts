@@ -13,7 +13,7 @@ type CalendarEvent = {
   uid?: string;
   organizer?: string;
   attendees?: string[];
-  recurrence?: any;
+  recurrence?: unknown;
   created?: Date;
   lastModified?: Date;
 };
@@ -122,9 +122,15 @@ export async function GET(request: NextRequest) {
           location: component.location,
           url: component.url,
           uid: component.uid,
-          organizer: component.organizer,
+          organizer: typeof component.organizer === 'string' ? component.organizer : undefined,
           attendees: component.attendee ? 
-            (Array.isArray(component.attendee) ? component.attendee : [component.attendee]) : 
+            (Array.isArray(component.attendee) ? 
+              component.attendee.map((a: unknown) => {
+                if (typeof a === 'string') return a;
+                const attendee = a as { val?: string; params?: { CN?: string } };
+                return attendee.val || attendee.params?.CN || '';
+              }) : 
+              [typeof component.attendee === 'string' ? component.attendee : '']) : 
             undefined,
           created: component.created,
           lastModified: component.lastmodified,
@@ -227,12 +233,10 @@ export async function GET(request: NextRequest) {
 
     // Extract calendar name from the ICS data if available
     let calendarName = "Calendar Feed";
-    for (const key in parsedData) {
-      const component = parsedData[key];
-      if (component.type === "VCALENDAR" && component["x-wr-calname"]) {
-        calendarName = component["x-wr-calname"];
-        break;
-      }
+    // The parsed data might contain calendar properties at the root level
+    const calData = parsedData as Record<string, unknown>;
+    if (calData["x-wr-calname"] && typeof calData["x-wr-calname"] === 'string') {
+      calendarName = calData["x-wr-calname"];
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

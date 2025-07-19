@@ -39,7 +39,7 @@ export default function Home() {
     try {
       new URL(url);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -72,8 +72,8 @@ export default function Home() {
 
           // Parse the title to extract date and event name
           const title = getTextContent("title");
-          let eventTitle = title;
-          let eventDate = getTextContent("pubDate");
+          const eventTitle = title;
+          const eventDate = getTextContent("pubDate");
 
           // Extract event details from description if available
           const description = getTextContent("description");
@@ -107,6 +107,7 @@ export default function Home() {
       return () => clearTimeout(timeoutId);
     }
     setPreviewEvents([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [icsUrl]);
 
   return (
@@ -147,8 +148,8 @@ export default function Home() {
             <h2 className="font-semibold text-gray-800">How do I use this?</h2>
             <p className="text-gray-600">
               Put the URL of an ICS calendar file in the box above; browse the
-              preview to make sure it's what you want; hit the button to get a
-              permalink (that's a compressed URL of the calendar, so no real
+              preview to make sure it&apos;s what you want; hit the button to get a
+              permalink (that&apos;s a compressed URL of the calendar, so no real
               worry about bitrot).
             </p>
           </div>
